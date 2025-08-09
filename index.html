@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Чат с друзьями</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
+        #messages { border: 1px solid #ccc; height: 300px; overflow-y: auto; padding: 10px; }
+        #inputArea { margin-top: 10px; }
+        #controls { margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<h2>Регистрация</h2>
+<input type="text" id="registerNickname" placeholder="Ник" />
+<input type="password" id="registerPassword" placeholder="Пароль" />
+<button id="registerBtn">Зарегистрироваться</button>
+
+<h2>Вход</h2>
+<input type="text" id="loginNickname" placeholder="Ник" />
+<input type="password" id="loginPassword" placeholder="Пароль" />
+<button id="loginBtn">Войти</button>
+
+<h2>Добавить друга</h2>
+<input type="text" id="friendNickname" placeholder="Ник друга" />
+<button id="addFriendBtn">Добавить друга</button>
+
+<h2>Сообщения</h2>
+<div id="messages"></div>
+<div id="inputArea">
+    <input type="text" id="message" placeholder="Введите сообщение" />
+    <button id="sendBtn">Отправить</button>
+</div>
+
+<script>
+    let currentUser  = null;
+    let friendsList = [];
+    let messages = JSON.parse(localStorage.getItem('chatMessages') || '[]');
+
+    function renderMessages() {
+        const messagesDiv = document.getElementById('messages');
+        messagesDiv.innerHTML = messages.map(msg =>
+            `<div><b>${escapeHtml(msg.sender)}:</b> ${escapeHtml(msg.text)} <small style="color:#888;">[${new Date(msg.time).toLocaleTimeString()}]</small></div>`
+        ).join('');
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function register() {
+        const nickname = document.getElementById('registerNickname').value;
+        const password = document.getElementById('registerPassword').value;
+        if (!nickname || !password) return alert('Введите ник и пароль');
+
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        if (users.find(user => user.nickname === nickname)) {
+            return alert('Пользователь с таким ником уже существует');
+        }
+
+        users.push({ nickname, password });
+        localStorage.setItem('users', JSON.stringify(users));
+        alert('Регистрация успешна!');
+    }
+
+    function login() {
+        const nickname = document.getElementById('loginNickname').value;
+        const password = document.getElementById('loginPassword').value;
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const user = users.find(user => user.nickname === nickname && user.password === password);
+        if (!user) return alert('Неверный ник или пароль');
+
+        currentUser  = nickname;
+        friendsList = JSON.parse(localStorage.getItem('friends') || '[]').filter(friend => friend.user === nickname).map(friend => friend.friend);
+        alert(`Вы вошли как ${currentUser }`);
+        renderMessages();
+    }
+
+    function addFriend() {
+        const friendNickname = document.getElementById('friendNickname').value;
+        if (!currentUser ) return alert('Сначала войдите в систему');
+
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        if (!users.find(user => user.nickname === friendNickname)) {
+            return alert('Пользователь не найден');
+        }
+
+        const friends = JSON.parse(localStorage.getItem('friends') || '[]');
+        if (friends.find(friend => friend.user === currentUser  && friend.friend === friendNickname)) {
+            return alert('Этот пользователь уже в вашем списке друзей');
+        }
+
+        friends.push({ user: currentUser , friend: friendNickname });
+        localStorage.setItem('friends', JSON.stringify(friends));
+        alert(`Друг ${friendNickname} добавлен!`);
+    }
+
+    function sendMessage() {
+        const messageInput = document.getElementById('message');
+        const text = messageInput.value;
+        if (!currentUser  || !text) return alert('Введите сообщение');
+
+        const msg = { sender: currentUser , text, time: Date.now() };
+        messages.push(msg);
+        localStorage.setItem('chatMessages', JSON.stringify(messages));
+        messageInput.value = '';
+        renderMessages();
+    }
+
+    document.getElementById('registerBtn').onclick = register;
+    document.getElementById('loginBtn').onclick = login;
+    document.getElementById('addFriendBtn').onclick = addFriend;
+    document.getElementById('sendBtn').onclick = sendMessage;
+
+    renderMessages();
+</script>
+
+</body>
+</html>
