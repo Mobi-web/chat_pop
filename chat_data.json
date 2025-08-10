@@ -1,0 +1,18 @@
+{
+  "users": {
+    "alice": "123",
+    "bob": "456"
+  },
+  "messages": [
+    {
+      "sender": "alice",
+      "text": "Привет всем!",
+      "timestamp": "2025-08-10T12:00:00Z"
+    },
+    {
+      "sender": "bob",
+      "text": "Привет, Алиса!",
+      "timestamp": "2025-08-10T12:01:00Z"
+    }
+  ]
+}
